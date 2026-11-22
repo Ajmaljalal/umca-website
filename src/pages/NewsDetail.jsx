@@ -106,7 +106,7 @@ const NewsDetail = () => {
     return (
         <article className="article-page">
             <header className="article-header">
-                <div className="container article-narrow">
+                <div className="container article-wide">
                     <Link to="/news" className="article-back">
                         <FaArrowLeft aria-hidden="true" /> All news
                     </Link>

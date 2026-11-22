@@ -26,6 +26,7 @@
         font-size: clamp(2rem, 4.2vw, 2.9rem);
         line-height: 1.15;
         margin-bottom: 16px;
+        text-wrap: pretty;
     }
 }
 
@@ -45,6 +46,7 @@
 }
 
 .article-summary {
+    max-width: 62ch;
     font-size: 1.2rem;
     line-height: 1.55;
     color: $muted;
@@ -107,7 +109,8 @@
     }
 }
 
-.article-page .article-cover-wrap {
+.article-page .article-cover-wrap,
+.article-page .article-wide {
     max-width: 1040px + 48px;
 }
 

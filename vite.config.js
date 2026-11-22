@@ -38,10 +38,35 @@ function newsApiPlugin() {
     return {
         name: 'news-api-plugin',
         configureServer(server) {
-            server.middlewares.use((req, res, next) => {
+            server.middlewares.use(async (req, res, next) => {
+                // POST /api/login: same server-side password check as production (api/_auth.js)
+                if (req.url && req.url.startsWith('/api/login') && req.method === 'POST') {
+                    let body = '';
+                    req.on('data', chunk => { body += chunk; });
+                    req.on('end', async () => {
+                        res.setHeader('Content-Type', 'application/json');
+                        try {
+                            const { login } = await server.ssrLoadModule('/api/_auth.js');
+                            const { username, password } = JSON.parse(body || '{}');
+                            const session = login(username, password);
+                            if (!session) {
+                                res.statusCode = 401;
+                                res.end(JSON.stringify({ error: 'Invalid credentials. Please check your username and password.' }));
+                                return;
+                            }
+                            res.end(JSON.stringify(session));
+                        } catch (e) {
+                            res.statusCode = 500;
+                            res.end(JSON.stringify({ error: e.message }));
+                        }
+                    });
+                    return;
+                }
+
                 if (!req.url || (!req.url.startsWith('/api/news') && !req.url.startsWith('/api/upload'))) {
                     return next();
                 }
+                res.setHeader('Content-Type', 'application/json');
 
                 // Helper to parse JSON body
                 const parseBody = (cb) => {

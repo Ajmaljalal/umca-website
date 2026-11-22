@@ -14,7 +14,7 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
@@ -24,15 +24,13 @@ const Login = () => {
         }
 
         setLoading(true);
-        setTimeout(() => {
-            const res = login(username, password);
-            setLoading(false);
-            if (res.success) {
-                navigate('/news');
-            } else {
-                setError(res.error);
-            }
-        }, 300);
+        const res = await login(username, password);
+        setLoading(false);
+        if (res.success) {
+            navigate('/news');
+        } else {
+            setError(res.error);
+        }
     };
 
     if (user) {

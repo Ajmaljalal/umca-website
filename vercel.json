@@ -1,7 +1,13 @@
 {
+  "installCommand": "npm install",
+  "functions": {
+    "api/**/*.js": {
+      "includeFiles": "src/data/news.json"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

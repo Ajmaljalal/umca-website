@@ -113,3 +113,13 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# macOS
+.DS_Store
+
+# Old plain-text password file (accounts now live in api/_users.js as hashes)
+src/data/users.json
+
+# Vercel
+.vercel
+.env*.local

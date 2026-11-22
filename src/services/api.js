@@ -10,10 +10,17 @@ import medicalClinicImg from '../assets/news/medical-clinic.jpg';
 import medicalMedicineImg from '../assets/news/medical-medicine.jpg';
 import waterWellImg from '../assets/news/water-well.jpg';
 import waterPumpImg from '../assets/news/water-pump.jpg';
-import uploadPic1 from '../assets/uploads/1788804961487-pexels-steve-30018097.jpg';
-import uploadPic2 from '../assets/uploads/1788804961512-pexels-amal-a-s-2150318757-31913642.jpg';
-import uploadPic3 from '../assets/uploads/1788804961522-pexels-christina99999-38524143.jpg';
 import newsInitialData from '../data/news.json';
+
+// Every picture that was ever saved into src/assets/uploads (older articles reference these by path)
+const uploadedAssetUrls = import.meta.glob('../assets/uploads/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG}', {
+    eager: true,
+    query: '?url',
+    import: 'default'
+});
+const uploadsMap = Object.fromEntries(
+    Object.entries(uploadedAssetUrls).map(([path, url]) => [path.split('/').pop(), url])
+);
 
 // Image mapping for filenames stored in JSON
 const imageMap = {
@@ -29,15 +36,13 @@ const imageMap = {
     'flood.jpg': img2,
     'news1.jpg': img3,
     'news2.jpg': img4,
-    '1788804961487-pexels-steve-30018097.jpg': uploadPic1,
-    '1788804961512-pexels-amal-a-s-2150318757-31913642.jpg': uploadPic2,
-    '1788804961522-pexels-christina99999-38524143.jpg': uploadPic3
+    ...uploadsMap
 };
 
 export const resolveImageUrl = (img) => {
     if (!img) return winterSuppliesImg;
     if (typeof img !== 'string') return img;
-    // Data URLs, Blobs, and external HTTP URLs can be used directly without parsing
+    // Data URLs, Blobs, and external HTTP URLs (e.g. Vercel Blob) can be used directly
     if (img.startsWith('data:') || img.startsWith('blob:') || img.startsWith('http://') || img.startsWith('https://')) {
         return img;
     }
@@ -47,24 +52,33 @@ export const resolveImageUrl = (img) => {
     return img;
 };
 
+const toContentArray = (content, fallback = ["No details provided."]) => (
+    Array.isArray(content)
+        ? content
+        : (typeof content === 'string'
+            ? content.split('\n\n').filter(p => p.trim())
+            : fallback)
+);
+
 const normalizeArticle = (article) => {
     if (!article) return article;
-    const contentArray = Array.isArray(article.content)
-        ? article.content
-        : (typeof article.content === 'string'
-            ? article.content.split('\n\n').filter(p => p.trim())
-            : ["No details provided."]);
-
     return {
         ...article,
-        content: contentArray,
+        content: toContentArray(article.content),
         image: resolveImageUrl(article.image),
         relatedImages: (article.relatedImages || []).map(item => ({
-            ...item,
+            ...(typeof item === 'object' ? item : {}),
             url: resolveImageUrl(item && item.url ? item.url : item)
         }))
     };
 };
+
+const sortNewestFirst = (list) => [...list].sort((a, b) => {
+    const dateA = new Date(a.date || 0).getTime();
+    const dateB = new Date(b.date || 0).getTime();
+    if (dateB !== dateA) return dateB - dateA;
+    return Number(b.id || 0) - Number(a.id || 0);
+});
 
 /**
  * Client-side Canvas Image Compression
@@ -127,195 +141,87 @@ export const compressImageFile = (file, maxWidth = 1600, maxHeight = 1600, quali
     });
 };
 
-/**
- * IndexedDB Native Storage Engine
- * High-capacity client database (hundreds of MBs) that prevents 5MB localStorage quota errors.
- */
-const DB_NAME = 'umca_news_db';
-const DB_VERSION = 1;
-const STORE_NAME = 'articles';
-const STORAGE_KEY = 'umca_news_articles_v2';
-const INIT_KEY = 'umca_news_initialized_v2';
-
-const openDB = () => {
-    return new Promise((resolve, reject) => {
-        if (typeof window === 'undefined' || !window.indexedDB) {
-            reject(new Error("IndexedDB is not available"));
-            return;
-        }
-        const req = window.indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-            }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-    });
-};
-
-const idbGetAll = async () => {
-    try {
-        const db = await openDB();
-        return new Promise((resolve) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.getAll();
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => resolve([]);
-        });
-    } catch (e) {
-        return [];
-    }
-};
-
-const idbPut = async (item) => {
-    try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.put(item);
-            req.onsuccess = () => resolve(true);
-            req.onerror = () => reject(req.error);
-        });
-    } catch (e) {
-        return false;
-    }
-};
-
-const idbPutAll = async (items) => {
-    try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            items.forEach(item => store.put(item));
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => reject(tx.error);
-        });
-    } catch (e) {
-        return false;
-    }
-};
-
-const idbDelete = async (id) => {
-    try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const numId = Number(id);
-            const strId = String(id);
-            if (!isNaN(numId)) store.delete(numId);
-            store.delete(strId);
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => reject(tx.error);
-        });
-    } catch (e) {
-        return false;
-    }
-};
-
-const idbClear = async () => {
-    try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            store.clear();
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => reject(tx.error);
-        });
-    } catch (e) {
-        return false;
-    }
-};
 
 /**
- * LocalStorage sync helper with size guard to avoid QuotaExceededError
+ * Server API helpers.
+ * News and pictures are stored on the server (Vercel Blob in production,
+ * src/data/news.json + src/assets/uploads when running `npm run dev`).
+ * Writes require an admin session token issued by /api/login.
  */
-const saveToLocalStorage = (articles) => {
+const TOKEN_KEY = 'umca_auth_token';
+
+export const getAuthToken = () => {
     try {
-        const sanitized = articles.map(item => {
-            const isDataUrl = item.image && item.image.startsWith('data:');
-            return {
-                ...item,
-                image: isDataUrl && item.image.length > 300000 ? '' : item.image,
-                relatedImages: (item.relatedImages || []).map(r => ({
-                    ...r,
-                    url: r.url && r.url.startsWith('data:') && r.url.length > 300000 ? '' : r.url
-                }))
-            };
-        });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        return localStorage.getItem(TOKEN_KEY) || '';
     } catch (e) {
-        console.warn("LocalStorage quota reached; relying on IndexedDB", e);
+        return '';
     }
 };
 
-const getFromLocalStorage = () => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-                return parsed;
-            }
-        }
-    } catch (e) {}
-    return [];
-};
-
-/**
- * Helper to safely check if response is real JSON (preventing HTML SyntaxError on Vercel)
- */
 const isRealJsonResponse = (response) => {
-    if (!response || !response.ok) return false;
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = (response && response.headers.get('content-type')) || '';
     return contentType.includes('application/json');
 };
 
+const apiRequest = async (url, { method = 'GET', body, auth = false } = {}) => {
+    const headers = {};
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (auth) {
+        const token = getAuthToken();
+        if (!token) throw new Error('You are not signed in. Please log in again.');
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    let response;
+    try {
+        response = await fetch(url, {
+            method,
+            headers,
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+            cache: 'no-store'
+        });
+    } catch (e) {
+        throw new Error('Could not reach the server. Check your internet connection and try again.');
+    }
+
+    if (!isRealJsonResponse(response)) {
+        throw new Error('The news server is not available.');
+    }
+    const data = await response.json().catch(() => null);
+    if (response.status === 401) {
+        throw new Error((data && data.error) || 'Your session has expired. Please log in again.');
+    }
+    if (!response.ok) {
+        throw new Error((data && data.error) || `Request failed (${response.status})`);
+    }
+    return data;
+};
+
 /**
- * Upload Image: Compresses on canvas, uploads to server if available, or returns data URL
+ * Upload Image: compresses in the browser, then stores it on the server.
+ * Returns the permanent picture URL.
  */
 export const uploadImage = async (file) => {
     const compressedDataUrl = await compressImageFile(file, 1600, 1600, 0.82);
-
-    try {
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filename: file.name || 'photo.jpg',
-                data: compressedDataUrl
-            })
-        });
-        if (isRealJsonResponse(response)) {
-            const result = await response.json();
-            if (result && result.url) {
-                return result.url;
-            }
-        }
-    } catch (e) {
-        // Dev server / API not available (production Vercel)
-    }
-
-    return compressedDataUrl;
+    if (!compressedDataUrl) throw new Error('Could not read the selected picture.');
+    const result = await apiRequest('/api/upload', {
+        method: 'POST',
+        auth: true,
+        body: { filename: file.name || 'photo.jpg', data: compressedDataUrl }
+    });
+    if (!result || !result.url) throw new Error('Picture upload failed.');
+    return result.url;
 };
 
 export const deleteUploadedImage = async (imageUrl) => {
     if (!imageUrl || typeof imageUrl !== 'string') return;
-    if (!imageUrl.includes('/uploads/')) return;
+    const isServerPicture = imageUrl.includes('/uploads/') || imageUrl.includes('.blob.vercel-storage.com/');
+    if (!isServerPicture) return;
     try {
-        const response = await fetch(`/api/upload?url=${encodeURIComponent(imageUrl)}`, {
-            method: 'DELETE'
-        });
-        if (isRealJsonResponse(response)) {
-            // Deleted on server
-        }
-    } catch (e) {}
+        await apiRequest(`/api/upload?url=${encodeURIComponent(imageUrl)}`, { method: 'DELETE', auth: true });
+    } catch (e) {
+        console.warn('Could not delete picture', imageUrl, e);
+    }
 };
 
 export const presetImages = [
@@ -332,194 +238,76 @@ export const presetImages = [
 ];
 
 /**
- * Fetch all news: syncs with /api/news if available, otherwise reads from IndexedDB
+ * Fetch all news from the server. Falls back to the bundled news.json
+ * only when the server cannot be reached (e.g. `vite preview`).
  */
 export const fetchNews = async () => {
-    // 1. If backend API is running (e.g. Vite dev server), sync with /api/news
+    const fresh = getAuthToken() ? '?fresh=1' : '';
     try {
-        const response = await fetch('/api/news');
-        if (isRealJsonResponse(response)) {
-            const apiArticles = await response.json();
-            if (Array.isArray(apiArticles)) {
-                await idbClear();
-                await idbPutAll(apiArticles);
-                saveToLocalStorage(apiArticles);
-                localStorage.setItem(INIT_KEY, 'true');
-                return apiArticles.map(normalizeArticle);
-            }
+        const articles = await apiRequest(`/api/news${fresh}`);
+        if (Array.isArray(articles)) {
+            return sortNewestFirst(articles).map(normalizeArticle);
         }
     } catch (e) {
-        // Backend API not reachable
+        console.warn('News server unavailable, showing bundled news', e);
     }
-
-    // 2. Read from IndexedDB
-    let stored = await idbGetAll();
-
-    // 3. Seed if this is the very first time
-    const isInitialized = localStorage.getItem(INIT_KEY);
-    if (!isInitialized && stored.length === 0) {
-        const lsData = getFromLocalStorage();
-        const initialList = lsData.length > 0 ? lsData : newsInitialData;
-        await idbPutAll(initialList);
-        saveToLocalStorage(initialList);
-        localStorage.setItem(INIT_KEY, 'true');
-        stored = initialList;
-    }
-
-    // Sort newest first
-    const sorted = [...stored].sort((a, b) => {
-        const dateA = new Date(a.date || 0).getTime();
-        const dateB = new Date(b.date || 0).getTime();
-        if (dateB !== dateA) return dateB - dateA;
-        return Number(b.id || 0) - Number(a.id || 0);
-    });
-
-    return sorted.map(normalizeArticle);
+    return sortNewestFirst(Array.isArray(newsInitialData) ? newsInitialData : []).map(normalizeArticle);
 };
 
 export const fetchNewsById = async (id) => {
+    const fresh = getAuthToken() ? '?fresh=1' : '';
     try {
-        const response = await fetch(`/api/news/${id}`);
-        if (isRealJsonResponse(response)) {
-            const article = await response.json();
-            if (article) return normalizeArticle(article);
-        }
-    } catch (e) {}
-
-    const articles = await idbGetAll();
-    let found = articles.find(item => String(item.id) === String(id));
-
-    if (!found) {
-        const ls = getFromLocalStorage();
-        found = ls.find(item => String(item.id) === String(id));
+        const article = await apiRequest(`/api/news/${encodeURIComponent(id)}${fresh}`);
+        if (article) return normalizeArticle(article);
+    } catch (e) {
+        if (!/not available|reach the server/i.test(e.message)) throw e;
     }
-
-    if (!found && Array.isArray(newsInitialData)) {
-        found = newsInitialData.find(item => String(item.id) === String(id));
-    }
-
-    if (found) {
-        return normalizeArticle(found);
-    }
+    const found = (Array.isArray(newsInitialData) ? newsInitialData : [])
+        .find(item => String(item.id) === String(id));
+    if (found) return normalizeArticle(found);
     throw new Error("News article not found");
 };
 
 export const createNews = async (newsItem) => {
     const newArticle = {
-        id: newsItem.id || Date.now(),
         title: newsItem.title || "Untitled News",
         date: newsItem.date || new Date().toISOString().split('T')[0],
         author: newsItem.author || "UMCA Team",
         readTime: newsItem.readTime || "3 min read",
         summary: newsItem.summary || "",
         image: newsItem.image || "winter-supplies.jpg",
-        content: Array.isArray(newsItem.content)
-            ? newsItem.content
-            : (typeof newsItem.content === 'string'
-                ? newsItem.content.split('\n\n').filter(p => p.trim())
-                : ["No details provided."]),
+        content: toContentArray(newsItem.content),
         quote: newsItem.quote || null,
         relatedImages: newsItem.relatedImages && newsItem.relatedImages.length > 0
             ? newsItem.relatedImages
             : [{ url: newsItem.image || "winter-supplies.jpg", title: newsItem.title || "News Photo" }]
     };
-
-    try {
-        const response = await fetch('/api/news', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newArticle)
-        });
-        if (isRealJsonResponse(response)) {
-            const saved = await response.json();
-            if (saved && saved.id) {
-                Object.assign(newArticle, saved);
-            }
-        }
-    } catch (e) {
-        // Backend API not reachable
-    }
-
-    // Persist to IndexedDB and sync localStorage
-    await idbPut(newArticle);
-    const all = await idbGetAll();
-    saveToLocalStorage(all);
-    localStorage.setItem(INIT_KEY, 'true');
-
-    return normalizeArticle(newArticle);
+    const saved = await apiRequest('/api/news', { method: 'POST', auth: true, body: newArticle });
+    return normalizeArticle(saved);
 };
 
 export const updateNews = async (id, updatedFields) => {
-    try {
-        const response = await fetch(`/api/news/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedFields)
-        });
-        if (isRealJsonResponse(response)) {
-            const saved = await response.json();
-            // Server updated
-        }
-    } catch (e) {}
-
-    const articles = await idbGetAll();
-    let existing = articles.find(item => String(item.id) === String(id));
-    if (!existing) {
-        existing = getFromLocalStorage().find(item => String(item.id) === String(id));
-    }
-    if (!existing && Array.isArray(newsInitialData)) {
-        existing = newsInitialData.find(item => String(item.id) === String(id));
-    }
-
-    if (!existing) {
-        throw new Error("Article not found for update");
-    }
-
-    const updated = {
-        ...existing,
-        ...updatedFields,
-        id: existing.id,
-        content: Array.isArray(updatedFields.content)
-            ? updatedFields.content
-            : (typeof updatedFields.content === 'string'
-                ? updatedFields.content.split('\n\n').filter(p => p.trim())
-                : existing.content)
-    };
-
-    await idbPut(updated);
-    const all = await idbGetAll();
-    saveToLocalStorage(all);
-    localStorage.setItem(INIT_KEY, 'true');
-
-    return normalizeArticle(updated);
+    const body = { ...updatedFields };
+    if (body.content !== undefined) body.content = toContentArray(body.content);
+    const saved = await apiRequest(`/api/news/${encodeURIComponent(id)}`, { method: 'PUT', auth: true, body });
+    return normalizeArticle(saved);
 };
 
 export const deleteNews = async (id) => {
-    try {
-        const response = await fetch(`/api/news/${id}`, {
-            method: 'DELETE'
-        });
-        if (isRealJsonResponse(response)) {
-            const resData = await response.json();
-            console.log(`Successfully removed article ${id} from server:`, resData);
-        }
-    } catch (e) {}
-
-    await idbDelete(id);
-    const remaining = (await idbGetAll()).filter(item => String(item.id) !== String(id));
-    saveToLocalStorage(remaining);
-    localStorage.setItem(INIT_KEY, 'true');
-
+    await apiRequest(`/api/news/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true });
     return true;
 };
 
 /**
- * Admin export tool: Downloads the current news dataset as news.json
- * Allows the admin to commit updated news to the git repository for global deployment.
+ * Admin export tool: downloads the current news list as news.json (backup).
  */
 export const exportNewsData = async () => {
-    const articles = await idbGetAll();
-    const list = articles.length > 0 ? articles : newsInitialData;
+    let list;
+    try {
+        list = await apiRequest(`/api/news${getAuthToken() ? '?fresh=1' : ''}`);
+    } catch (e) {
+        list = newsInitialData;
+    }
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
         JSON.stringify(list, null, 4)
     )}`;

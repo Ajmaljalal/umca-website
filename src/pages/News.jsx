@@ -1,34 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { FaPlus, FaPen, FaTrashCan, FaDownload, FaCircleCheck } from 'react-icons/fa6';
 import Card from '../components/Card';
 import NewsModal from '../components/NewsModal';
+import PageHeader from '../components/PageHeader';
 import { fetchNews, createNews, updateNews, deleteNews, exportNewsData } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { FaNewspaper, FaPlus, FaEdit, FaTrash, FaCheckCircle, FaDownload } from 'react-icons/fa';
+import { formatDate } from '../utils/format';
 import './News.scss';
 
 const News = () => {
     const { user } = useAuth();
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [editingArticle, setEditingArticle] = useState(null);
     const [toastMessage, setToastMessage] = useState('');
 
-    const loadNews = async () => {
-        try {
-            const data = await fetchNews();
-            setNews(data);
-        } catch (error) {
-            console.error("Failed to fetch news", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        loadNews();
+        fetchNews()
+            .then(setNews)
+            .catch(error => console.error('Failed to fetch news', error))
+            .finally(() => setLoading(false));
     }, []);
 
     const showToast = (msg) => {
@@ -46,142 +38,102 @@ const News = () => {
         setModalOpen(true);
     };
 
+    // Errors are thrown back to the modal so it can show them next to the form
     const handleSaveArticle = async (formData) => {
-        try {
-            if (editingArticle) {
-                // Update
-                const updated = await updateNews(editingArticle.id, formData);
-                setNews(prev => prev.map(item => item.id === updated.id ? updated : item));
-                showToast('Article updated successfully!');
-            } else {
-                // Create
-                const created = await createNews(formData);
-                setNews(prev => [created, ...prev]);
-                showToast('New article published successfully!');
-            }
-        } catch (err) {
-            console.error("Failed to save article:", err);
-            alert("Could not save article: " + (err.message || 'Unknown error'));
-        }
-    };
-
-    const handleExport = async () => {
-        try {
-            await exportNewsData();
-            showToast('news.json exported successfully!');
-        } catch (err) {
-            console.error("Failed to  data:", err);
-            alert("Failed to export data: " + err.message);
+        if (editingArticle) {
+            const updated = await updateNews(editingArticle.id, formData);
+            setNews(prev => prev.map(item => item.id === updated.id ? updated : item));
+            showToast('Article updated');
+        } else {
+            const created = await createNews(formData);
+            setNews(prev => [created, ...prev]);
+            showToast('Article published');
         }
     };
 
     const handleDelete = async (id, title) => {
-        const confirmed = window.confirm(`Are you sure you want to remove the article: "${title}"? This action cannot be undone.`);
+        const confirmed = window.confirm(`Delete "${title}"? This also removes its photos and cannot be undone.`);
         if (!confirmed) return;
-
         try {
             await deleteNews(id);
             setNews(prev => prev.filter(item => item.id !== id));
-            showToast('Article removed successfully!');
+            showToast('Article deleted');
         } catch (err) {
-            console.error("Failed to delete article", err);
-            alert("Failed to delete article: " + err.message);
+            alert('Could not delete the article: ' + err.message);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="container news-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading Latest News & Activities...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="news-page">
-            {/* News Header Section */}
-            <section className="news-hero-section">
-                <div className="container">
-                    <span className="news-subheading">
-                        <FaNewspaper className="hero-icon" /> Field Updates & Announcements
-                    </span>
-                    <h1 className="news-hero-title">Latest News & Activities</h1>
-                    <p className="news-hero-desc">
-                        Explore firsthand stories of humanitarian relief, community empowerment, and ongoing initiatives by UMCA.
-                    </p>
-                </div>
-            </section>
+            <PageHeader
+                title="News"
+                intro="Reports from our relief work, programs, and community events."
+            />
 
-            {/* Notification Toast */}
             {toastMessage && (
-                <div className="news-toast-notification">
-                    <FaCheckCircle className="toast-icon" />
+                <div className="news-toast" role="status">
+                    <FaCircleCheck aria-hidden="true" />
                     <span>{toastMessage}</span>
                 </div>
             )}
 
-            {/* All News in One Page */}
-            <div className="container news-content-wrapper">
-                {/* Admin Management Toolbar */}
-                {user && (
-                    <div className="news-management-bar">
-                        <div className="management-info">
-                            <span className="user-role-tag">{user.role}</span>
-                            <span>Signed in as <strong>{user.name}</strong> • You can create, edit, and remove news.</span>
+            <section className="section">
+                <div className="container">
+                    {user && (
+                        <div className="news-admin-bar">
+                            <p>
+                                Signed in as <strong>{user.name}</strong>. Changes you publish appear on the site within a minute.
+                            </p>
+                            <div className="news-admin-actions">
+                                <button type="button" className="button outline" onClick={() => exportNewsData()}>
+                                    <FaDownload aria-hidden="true" /> Download backup
+                                </button>
+                                <button type="button" className="button primary" onClick={handleOpenAdd}>
+                                    <FaPlus aria-hidden="true" /> New article
+                                </button>
+                            </div>
                         </div>
-                        <div className="management-actions">
+                    )}
 
-                            <button
-                                type="button"
-                                className="button primary add-article-btn"
-                                onClick={handleOpenAdd}
-                            >
-                                <FaPlus /> Add New Article
-                            </button>
+                    {loading ? (
+                        <p className="news-status">Loading news…</p>
+                    ) : news.length === 0 ? (
+                        <div className="news-empty">
+                            <h2>No news yet</h2>
+                            <p>
+                                {user
+                                    ? 'Publish the first article with the New article button.'
+                                    : 'Check back soon for updates from UMCA.'}
+                            </p>
                         </div>
-                    </div>
-                )}
-
-                <div className="news-grid">
-                    {news.map(item => (
-                        <div key={item.id} className="news-card-wrapper">
-                            <Card
-                                title={item.title}
-                                description={item.summary}
-                                image={item.image}
-                                link={`/news/${item.id}`}
-                                buttonText="Read More ↗"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                date={item.date}
-                            />
-
-                            {/* Action Bar for Logged-In Users */}
-                            {user && (
-                                <div className="card-admin-bar">
-                                    <button
-                                        className="admin-action-btn edit"
-                                        onClick={() => handleOpenEdit(item)}
-                                        title="Edit this news article"
-                                    >
-                                        <FaEdit /> Edit
-                                    </button>
-                                    <button
-                                        className="admin-action-btn delete"
-                                        onClick={() => handleDelete(item.id, item.title)}
-                                        title="Delete this news article"
-                                    >
-                                        <FaTrash /> Delete
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                    ) : (
+                        <ul className="news-grid">
+                            {news.map(item => (
+                                <li key={item.id} className="news-item">
+                                    <Card
+                                        title={item.title}
+                                        description={item.summary}
+                                        image={item.image}
+                                        meta={formatDate(item.date)}
+                                        link={`/news/${item.id}`}
+                                    />
+                                    {user && (
+                                        <div className="news-item-admin">
+                                            <button type="button" onClick={() => handleOpenEdit(item)}>
+                                                <FaPen aria-hidden="true" /> Edit
+                                            </button>
+                                            <button type="button" className="is-danger" onClick={() => handleDelete(item.id, item.title)}>
+                                                <FaTrashCan aria-hidden="true" /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
-            </div>
+            </section>
 
-            {/* Insert / Edit Modal */}
             <NewsModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}

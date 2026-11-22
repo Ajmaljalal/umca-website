@@ -1,4 +1,5 @@
 import React from 'react';
+import PageHeader from '../components/PageHeader';
 import './OurTeam.scss';
 
 import habibullah_ziar from '../assets/team/habbibullah_ziar.jpg';
@@ -10,131 +11,110 @@ import Najib from '../assets/team/Najib.png';
 import zakir from '../assets/team/zakir.png';
 import anas from '../assets/team/anas.png';
 
-const OurTeam = () => {
-    const teamData = {
-        top: [
+const president = {
+    name: 'Habibullah Ziar',
+    position: 'President',
+    photo: habibullah_ziar,
+    desc: 'Provides strategic leadership, oversees organizational affairs, and guides UMCA in advancing its mission and vision.'
+};
+
+const groups = [
+    {
+        title: 'Officers and directors',
+        members: [
             {
-                id: 1,
-                name: 'Habibullah Ziar',
-                position: 'President',
-                photo: habibullah_ziar,
-                desc: 'Provides strategic leadership, oversees organizational affairs, and guides UMCA in advancing its mission and vision.'
-            }
-        ],
-        row1: [
-            {
-                id: 2,
                 name: 'Niamat Rasool Niamatyar',
                 position: 'Vice President',
                 photo: Naimatyar,
                 desc: 'Supports the President, coordinates organizational priorities, and helps advance UMCA’s mission and programs.'
             },
             {
-                id: 3,
                 name: 'Mohammad Shafiq Quraishi',
                 position: 'General Secretary',
                 photo: Shafiq,
                 desc: 'Oversees administration, maintains organizational records, and coordinates official communications and meetings.'
-            }
-        ],
-        row2: [
+            },
             {
-                id: 4,
                 name: 'Fazal Wahab Mumtaz',
                 position: 'Director of Outreach',
                 photo: Mumtaz,
                 desc: 'Builds community connections, leads outreach initiatives, and strengthens UMCA’s engagement with stakeholders and partners.'
             },
             {
-                id: 5,
                 name: 'Rohullah Sahil',
                 position: 'Director of Tarbiyya & Capacity Building',
                 photo: sahil,
-                desc: 'Leads Tarbiyya and capacity development programs, fosters personal and spiritual development, and strengthens members’ knowledge and character.'
-            }
-        ],
-        row3: [
+                desc: 'Leads Tarbiyya and capacity development programs, fostering personal and spiritual growth and strengthening members’ knowledge and character.'
+            },
             {
-                id: 6,
                 name: 'Najibullah Shukoor',
                 position: 'Director of Northeast Region',
                 photo: Najib,
-                desc: 'Leads regional activities, strengthens community engagement, and supports the growth of UMCA across the Northeast Region.'
+                desc: 'Leads regional activities, strengthens community engagement, and supports UMCA’s growth across the Northeast Region.'
             }
-        ],
-        row4: [
+        ]
+    },
+    {
+        title: 'UMCA Relief',
+        members: [
             {
-                id: 7,
                 name: 'Zakirullah Safi',
                 position: 'CEO, UMCA Relief',
                 photo: zakir,
-                desc: 'Leads UMCA Relief’s mission and strategy, oversees humanitarian initiatives, builds strategic partnerships, mobilizes resources, and guides organizational growth and impact.'
+                desc: 'Leads UMCA Relief’s mission and strategy, oversees humanitarian initiatives, builds partnerships, and mobilizes resources.'
             },
             {
-                id: 8,
                 name: 'Anas Safi',
                 position: 'COO, UMCA Relief',
                 photo: anas,
-                desc: 'Oversees UMCA Relief’s day-to-day operations, ensuring effective program delivery, coordination, and organizational efficiency.'
+                desc: 'Oversees UMCA Relief’s day-to-day operations, ensuring effective program delivery, coordination, and efficiency.'
             }
         ]
-    };
+    }
+];
 
-    const renderCard = (member) => (
-        <div key={member.id} className="team-card">
-            <div className="team-card-inner">
-                {/* Front of Card */}
-                <div className="team-card-front">
-                    <div className="team-image-wrapper">
-                        <img src={member.photo} alt={member.name} />
-                    </div>
-                    <h3>{member.name}</h3>
-                    <p>{member.position}</p>
-                </div>
-                {/* Back of Card */}
-                <div className="team-card-back">
-                    <h3>{member.name}</h3>
-                    <p className="team-back-position">{member.position}</p>
-                    <div className="team-divider"></div>
-                    <p className="team-desc">{member.desc}</p>
-                </div>
-            </div>
+const Member = ({ member }) => (
+    <li className="team-member">
+        <div className="team-photo">
+            <img src={member.photo} alt={`Portrait of ${member.name}`} loading="lazy" />
         </div>
-    );
+        <h3>{member.name}</h3>
+        <p className="team-role">{member.position}</p>
+        <p className="team-desc">{member.desc}</p>
+    </li>
+);
 
+const OurTeam = () => {
     return (
         <div className="team-page">
-            <div className="container team-header">
-                <h1>Meet Our Team</h1>
-                <p>The dedicated individuals working tirelessly to serve and uplift the UMCA community.</p>
-            </div>
+            <PageHeader
+                title="Our team"
+                intro="The leaders who guide UMCA’s work and programs."
+            />
 
-            <div className="team-grid">
-                {/* Tier 1: Single Member (Top) */}
-                <div className="team-tier-one">
-                    {teamData.top.map(renderCard)}
-                </div>
+            <section className="section">
+                <div className="container">
+                    <article className="team-lead">
+                        <div className="team-lead-photo">
+                            <img src={president.photo} alt={`Portrait of ${president.name}`} />
+                        </div>
+                        <div className="team-lead-text">
+                            <p className="team-role">{president.position}</p>
+                            <h2>{president.name}</h2>
+                            <p>{president.desc}</p>
+                        </div>
+                    </article>
 
-                {/* Tier 2: Two Members */}
-                <div className="team-tier-two">
-                    {teamData.row1.map(renderCard)}
+                    {groups.map(group => (
+                        <div key={group.title} className="team-group">
+                            <h2 className="team-group-title">{group.title}</h2>
+                            <ul className="team-grid">
+                                {group.members.map(member => <Member key={member.name} member={member} />)}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
-
-                {/* Tier 3: Two Members */}
-                <div className="team-tier-two">
-                    {teamData.row2.map(renderCard)}
-                </div>
-
-                {/* Tier 4: Single Member */}
-                <div className="team-tier-one">
-                    {teamData.row3.map(renderCard)}
-                </div>
-
-                {/* Tier 5: Two Members (Bottom) */}
-                <div className="team-tier-two">
-                    {teamData.row4.map(renderCard)}
-                </div>
-            </div>
+            </section>
         </div>
     );
 };

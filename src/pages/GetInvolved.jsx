@@ -1,78 +1,35 @@
 import React from 'react';
-import { FaHandshake, FaUserPlus, FaHandsHelping, FaDonate, FaHandHoldingHeart } from 'react-icons/fa';
-import Button from '../components/Button';
+import { Link } from 'react-router-dom';
+import PageHeader from '../components/PageHeader';
 import './GetInvolved.scss';
 
-const ActionCard = ({ title, desc, icon: Icon, theme }) => {
-    return (
-        <div className={`action-card ${theme}`}>
-            <div className="action-card-icon-wrapper">
-                <Icon className="action-card-icon" />
-            </div>
-            <h3 className="action-card-title">{title}</h3>
-            <p className="action-card-desc">{desc}</p>
-        </div>
-    );
-};
+const ways = [
+    { title: 'Become a member', desc: 'Join the UMCA community and take part in our programs and decisions.', to: '/contact', action: 'Contact us to join' },
+    { title: 'Volunteer', desc: 'Give your time to relief drives, youth programs, and community events.', to: '/contact', action: 'Offer to volunteer' },
+    { title: 'Donate', desc: 'Fund relief, education, and family support. Gifts are tax-deductible.', to: '/donate', action: 'Make a donation' },
+    { title: 'Partner with us', desc: 'Organizations and mosques can collaborate with UMCA on programs and outreach.', to: '/contact', action: 'Start a partnership' }
+];
 
 const GetInvolved = () => {
     return (
         <div className="involved-page">
-
-            {/* Hero Section */}
-            <div className="involved-hero">
-                <div className="container involved-hero-container">
-                    <FaHandHoldingHeart className="involved-icon-main" />
-                    <h1 className="involved-title">Get Involved</h1>
-                    <p className="involved-subtitle">
-                        UMCA's strength lies in its people. We invite you to join us in making a difference.
-                    </p>
+            <PageHeader
+                title="Get involved"
+                intro="UMCA’s strength is its people. Here is how you can take part in the work."
+            />
+            <section className="section">
+                <div className="container">
+                    <ul className="involved-list">
+                        {ways.map(way => (
+                            <li key={way.title}>
+                                <h2>{way.title}</h2>
+                                <p>{way.desc}</p>
+                                <Link to={way.to} className="text-link">{way.action}</Link>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-            </div>
-
-            <div className="container cards-container">
-                {/* Interactive Cards Section */}
-                <div className="cards-grid">
-                    <ActionCard
-                        title="Become a Member"
-                        desc="Join our community"
-                        icon={FaUserPlus}
-                        theme="primary"
-                    />
-                    <ActionCard
-                        title="Volunteer"
-                        desc="Share your time"
-                        icon={FaHandsHelping}
-                        theme="accent"
-                    />
-                    <ActionCard
-                        title="Donate"
-                        desc="Support our programs"
-                        icon={FaDonate}
-                        theme="primary"
-                    />
-                    <ActionCard
-                        title="Partner With Us"
-                        desc="Collaborate with us"
-                        icon={FaHandshake}
-                        theme="accent"
-                    />
-                </div>
-            </div>
-
-            {/* Bottom Footer Text / Call to Action */}
-            <div className="involved-footer">
-                <div className="container involved-footer-container">
-                    <h2 className="involved-footer-title">
-                        Together, we can nurture faith, serve humanity, and build a better future.
-                    </h2>
-                    <p className="involved-footer-text">
-                        Ready to take the next step? Choose an option above or contact us directly.
-                    </p>
-                    <Button to="/contact" variant="primary">Contact Us Today</Button>
-                </div>
-            </div>
-
+            </section>
         </div>
     );
 };

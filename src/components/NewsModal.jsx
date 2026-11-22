@@ -289,7 +289,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
         <div className="news-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
             <div className="news-modal-card" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>{isEditMode ? 'Edit News Article' : 'Add New News Article'}</h2>
+                    <h2>{isEditMode ? 'Edit article' : 'New article'}</h2>
                     <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
                         <FaTimes />
                     </button>
@@ -304,7 +304,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                 <form onSubmit={handleSubmit} className="modal-form">
                     <div className="form-row">
                         <div className="form-group flex-2">
-                            <label htmlFor="article-title">Article Title *</label>
+                            <label htmlFor="article-title">Title</label>
                             <input
                                 id="article-title"
                                 type="text"
@@ -316,7 +316,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                         </div>
 
                         <div className="form-group flex-1">
-                            <label htmlFor="article-date">Publish Date</label>
+                            <label htmlFor="article-date">Date</label>
                             <input
                                 id="article-date"
                                 type="date"
@@ -328,7 +328,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="article-author">Author / Byline</label>
+                        <label htmlFor="article-author">Author</label>
                         <input
                             id="article-author"
                             type="text"
@@ -339,7 +339,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="article-summary">Summary (Card Preview) *</label>
+                        <label htmlFor="article-summary">Summary</label>
                         <textarea
                             id="article-summary"
                             rows={2}
@@ -351,8 +351,8 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="article-content">Full News Story Details *</label>
-                        <span className="field-hint">Tip: Separate paragraphs with an empty line (double enter).</span>
+                        <label htmlFor="article-content">Story</label>
+                        <span className="field-hint">Leave an empty line between paragraphs.</span>
                         <textarea
                             id="article-content"
                             rows={6}
@@ -367,7 +367,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                     <div className="form-group multi-upload-group">
                         <div className="upload-header-row">
                             <div>
-                                <label>News Photography ({pictures.length} {pictures.length === 1 ? 'Picture' : 'Pictures'}) *</label>
+                                <label>Photos ({pictures.length})</label>
                                 <span className="field-hint">
                                     Upload one or multiple pictures from your computer. You can choose a cover picture and remove specific pictures.
                                 </span>
@@ -379,7 +379,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                                     className="button outline small add-more-pics-btn"
                                     onClick={() => fileInputRef.current?.click()}
                                 >
-                                    <FaPlus /> Add More Pictures
+                                    <FaPlus /> Add photos
                                 </button>
                             )}
                         </div>
@@ -417,7 +417,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                                     </p>
                                 </div>
                                 <button type="button" className="button outline browse-computer-btn">
-                                    Browse from Computer
+                                    Choose photos
                                 </button>
                             </div>
                         ) : (
@@ -499,7 +499,7 @@ const NewsModal = ({ isOpen, onClose, onSave, initialData = null, currentUser = 
                             className="button primary save-submit-btn"
                             disabled={saving}
                         >
-                            <FaSave /> {saving ? 'Saving Article...' : (isEditMode ? 'Update Article' : 'Publish Article')}
+                            <FaSave /> {saving ? 'Saving…' : (isEditMode ? 'Save changes' : 'Publish')}
                         </button>
                     </div>
                 </form>

@@ -1,25 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaXmark, FaChevronLeft, FaChevronRight, FaLink, FaCheck, FaPen, FaTrashCan } from 'react-icons/fa6';
 import { fetchNewsById, fetchNews, updateNews, deleteNews } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/Card';
+import Button from '../components/Button';
 import NewsModal from '../components/NewsModal';
-import {
-    FaArrowLeft,
-    FaRegCalendarAlt,
-    FaUser,
-    FaClock,
-    FaQuoteLeft,
-    FaTimes,
-    FaChevronLeft,
-    FaChevronRight,
-    FaExpand,
-    FaShareAlt,
-    FaCheck,
-    FaHeart,
-    FaEdit,
-    FaTrash
-} from 'react-icons/fa';
+import { formatDate } from '../utils/format';
 import './NewsDetail.scss';
 
 const NewsDetail = () => {
@@ -31,345 +18,232 @@ const NewsDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
-
-    // Lightbox modal state
     const [lightboxIndex, setLightboxIndex] = useState(null);
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        const loadArticle = async () => {
-            setLoading(true);
-            setError(null);
+        let active = true;
+        setLoading(true);
+        setError(null);
+        (async () => {
             try {
                 const data = await fetchNewsById(id);
+                if (!active) return;
                 setArticle(data);
-
-                // Fetch all news for "More Stories"
                 const allNews = await fetchNews();
-                setRelatedNews(allNews.filter(item => String(item.id) !== String(id)).slice(0, 3));
+                if (active) setRelatedNews(allNews.filter(item => String(item.id) !== String(id)).slice(0, 3));
             } catch (err) {
-                console.error("Error loading news detail", err);
-                setError("Unable to find this news article.");
+                if (active) setError('This article could not be found. It may have been removed.');
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
-        };
-
-        loadArticle();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        })();
+        return () => { active = false; };
     }, [id]);
 
-    // Keyboard navigation for lightbox
+    const photos = article?.relatedImages || [];
+
     useEffect(() => {
+        if (lightboxIndex === null) return undefined;
         const handleKeyDown = (e) => {
-            if (lightboxIndex === null || !article?.relatedImages) return;
-
-            if (e.key === 'Escape') {
-                setLightboxIndex(null);
-            } else if (e.key === 'ArrowRight') {
-                setLightboxIndex((prev) => (prev + 1) % article.relatedImages.length);
-            } else if (e.key === 'ArrowLeft') {
-                setLightboxIndex((prev) => (prev - 1 + article.relatedImages.length) % article.relatedImages.length);
-            }
+            if (e.key === 'Escape') setLightboxIndex(null);
+            if (e.key === 'ArrowRight') setLightboxIndex(prev => (prev + 1) % photos.length);
+            if (e.key === 'ArrowLeft') setLightboxIndex(prev => (prev - 1 + photos.length) % photos.length);
         };
-
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [lightboxIndex, article]);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [lightboxIndex, photos.length]);
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2500);
-    };
-
-    const handleSaveEdit = async (formData) => {
+    const handleCopyLink = async () => {
         try {
-            const updated = await updateNews(article.id, formData);
-            setArticle(updated);
-        } catch (err) {
-            console.error("Failed to update article", err);
-            alert("Failed to update article: " + err.message);
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2500);
+        } catch (e) {
+            window.prompt('Copy this link:', window.location.href);
         }
     };
 
-    const handleDeleteArticle = async () => {
-        const confirmed = window.confirm(`Are you sure you want to delete the article: "${article.title}"? This cannot be undone.`);
-        if (!confirmed) return;
+    // Errors are thrown back to the modal so it can show them next to the form
+    const handleSaveEdit = async (formData) => {
+        const updated = await updateNews(article.id, formData);
+        setArticle(updated);
+    };
 
+    const handleDeleteArticle = async () => {
+        const confirmed = window.confirm(`Delete "${article.title}"? This also removes its photos and cannot be undone.`);
+        if (!confirmed) return;
         try {
             await deleteNews(article.id);
             navigate('/news');
         } catch (err) {
-            console.error("Failed to delete article", err);
-            alert("Failed to delete article: " + err.message);
+            alert('Could not delete the article: ' + err.message);
         }
     };
 
     if (loading) {
         return (
-            <div className="news-detail-loading container">
-                <div className="detail-spinner"></div>
-                <p>Loading news details and photography...</p>
+            <div className="container article-status">
+                <p>Loading article…</p>
             </div>
         );
     }
 
     if (error || !article) {
         return (
-            <div className="news-detail-error container">
-                <h2>Article Not Found</h2>
-                <p>{error || "The news article you are looking for does not exist or has been relocated."}</p>
-                <Link to="/news" className="button primary">
-                    <FaArrowLeft /> Return to News
-                </Link>
+            <div className="container article-status">
+                <h1>Article not found</h1>
+                <p>{error}</p>
+                <Button to="/news" variant="outline">Back to news</Button>
             </div>
         );
     }
 
-    const formattedDate = new Date(article.date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-    });
-
     return (
-        <article className="news-detail-page">
-            {/* Top Navigation Bar */}
-            <div className="detail-top-bar">
-                <div className="container">
-                    <Link to="/news" className="back-link">
-                        <FaArrowLeft className="back-icon" /> Back to All News
+        <article className="article-page">
+            <header className="article-header">
+                <div className="container article-narrow">
+                    <Link to="/news" className="article-back">
+                        <FaArrowLeft aria-hidden="true" /> All news
                     </Link>
+                    <h1>{article.title}</h1>
+                    {article.summary && <p className="article-summary">{article.summary}</p>}
+                    <div className="article-byline">
+                        <p>
+                            <span>{article.author || 'UMCA Team'}</span>
+                            <time dateTime={article.date}>{formatDate(article.date)}</time>
+                        </p>
+                        <div className="article-tools">
+                            {user && (
+                                <>
+                                    <button type="button" onClick={() => setEditModalOpen(true)}>
+                                        <FaPen aria-hidden="true" /> Edit
+                                    </button>
+                                    <button type="button" className="is-danger" onClick={handleDeleteArticle}>
+                                        <FaTrashCan aria-hidden="true" /> Delete
+                                    </button>
+                                </>
+                            )}
+                            <button type="button" onClick={handleCopyLink} aria-live="polite">
+                                {copied
+                                    ? <><FaCheck aria-hidden="true" /> Link copied</>
+                                    : <><FaLink aria-hidden="true" /> Copy link</>}
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </header>
+
+            <div className="container article-cover-wrap">
+                <img src={article.image} alt="" className="article-cover" />
             </div>
 
-            <div className="container detail-container">
-                {/* Header Section */}
-                <header className="detail-header">
-                    <div className="detail-meta-tags">
-                        {article.readTime && (
-                            <span className="detail-meta-item">
-                                <FaClock className="meta-icon" /> {article.readTime}
-                            </span>
+            <div className="container article-narrow article-body">
+                {article.content.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                ))}
+
+                {article.quote && article.quote.text && (
+                    <blockquote className="article-quote">
+                        <p>{article.quote.text}</p>
+                        {article.quote.author && (
+                            <footer>
+                                <cite>{article.quote.author}</cite>
+                                {article.quote.role && <span>, {article.quote.role}</span>}
+                            </footer>
                         )}
-                        <span className="detail-meta-item">
-                            <FaRegCalendarAlt className="meta-icon" /> {formattedDate}
-                        </span>
-                    </div>
-
-                    <h1 className="detail-title">{article.title}</h1>
-
-                    <div className="detail-byline-bar">
-                        <div className="author-info">
-                            <div className="author-avatar">
-                                <FaUser />
-                            </div>
-                            <div>
-                                <p className="author-name">{article.author || "UMCA Media Team"}</p>
-                                <span className="author-role">Humanitarian Field Report</span>
-                            </div>
-                        </div>
-
-                        <div className="header-actions">
-                            {user && (
-                                <div className="detail-admin-group">
-                                    <button
-                                        className="detail-admin-btn edit"
-                                        onClick={() => setEditModalOpen(true)}
-                                        title="Edit this article"
-                                    >
-                                        <FaEdit /> Edit Article
-                                    </button>
-                                    <button
-                                        className="detail-admin-btn delete"
-                                        onClick={handleDeleteArticle}
-                                        title="Delete this article"
-                                    >
-                                        <FaTrash /> Delete Article
-                                    </button>
-                                </div>
-                            )}
-
-                            <button
-                                className={`share-button ${copied ? 'copied' : ''}`}
-                                onClick={handleCopyLink}
-                                aria-label="Share article link"
-                            >
-                                {copied ? (
-                                    <>
-                                        <FaCheck className="share-icon" /> Copied!
-                                    </>
-                                ) : (
-                                    <>
-                                        <FaShareAlt className="share-icon" /> Share
-                                    </>
-                                )}
-                            </button>
-                            <Link to="/donate" className="button primary donate-quick-btn">
-                                <FaHeart className="donate-icon" /> Donate
-                            </Link>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Hero Featured Image */}
-                <div className="detail-hero-media">
-                    <img src={article.image} alt={article.title} className="detail-hero-img" />
-                </div>
-
-                {/* Main Article Content Narrative */}
-                <div className="detail-content-body">
-                    {article.content && article.content.map((paragraph, index) => (
-                        <p key={index} className="content-paragraph">
-                            {paragraph}
-                        </p>
-                    ))}
-                </div>
-
-                {/* Field Quote Callout */}
-                {article.quote && (
-                    <blockquote className="detail-quote-card">
-                        <FaQuoteLeft className="quote-mark" />
-                        <p className="quote-text">"{article.quote.text}"</p>
-                        <footer className="quote-footer">
-                            <cite className="quote-author">{article.quote.author}</cite>
-                            <span className="quote-role">{article.quote.role}</span>
-                        </footer>
                     </blockquote>
                 )}
+            </div>
 
-                {/* Related Pictures Gallery */}
-                {article.relatedImages && article.relatedImages.length > 0 && (
-                    <section className="detail-gallery-section">
-                        <div className="gallery-header">
-                            <h2 className="gallery-title">Related Pictures</h2>
-                        </div>
-
-                        <div className="gallery-grid">
-                            {article.relatedImages.map((imgItem, idx) => (
-                                <div
-                                    key={idx}
-                                    className="gallery-item"
-                                    onClick={() => setLightboxIndex(idx)}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => e.key === 'Enter' && setLightboxIndex(idx)}
-                                    aria-label="View enlarged photo"
-                                >
-                                    <div className="gallery-image-wrapper">
-                                        <img
-                                            src={imgItem.url}
-                                            alt=""
-                                            className="gallery-thumb"
-                                            loading="lazy"
-                                        />
-                                        <div className="gallery-overlay">
-                                            <span className="zoom-indicator">
-                                                <FaExpand /> View Full Size
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Call to Action Banner */}
-                <section className="detail-cta-banner">
-                    <div className="cta-content">
-                        <h3>Help Us Deliver Hope & Immediate Relief</h3>
-                        <p>
-                            Your generous contribution powers our ground teams to respond to crises, feed families, build schools, and provide life-saving healthcare.
-                        </p>
-                        <div className="cta-buttons">
-                            <Link to="/donate" className="button primary cta-btn">
-                                Donate Now
-                            </Link>
-                            <Link to="/get-involved" className="button secondary cta-btn">
-                                Volunteer With Us
-                            </Link>
-                        </div>
-                    </div>
+            {photos.length > 1 && (
+                <section className="container article-gallery" aria-labelledby="gallery-title">
+                    <h2 id="gallery-title">Photos</h2>
+                    <ul>
+                        {photos.map((photo, idx) => (
+                            <li key={`${photo.url}-${idx}`}>
+                                <button type="button" onClick={() => setLightboxIndex(idx)} aria-label={`Open photo ${idx + 1} of ${photos.length}`}>
+                                    <img src={photo.url} alt="" loading="lazy" />
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 </section>
+            )}
 
-                {/* Related / More Stories */}
-                {relatedNews.length > 0 && (
-                    <section className="detail-related-news">
-                        <h2 className="related-section-title">More News & Field Stories</h2>
-                        <div className="related-news-grid">
+            <section className="cta-band article-cta">
+                <div className="container cta-band-inner">
+                    <div>
+                        <h2>Help us do more of this work</h2>
+                        <p>Your donation funds relief, education, and support for families.</p>
+                    </div>
+                    <div className="cta-band-actions">
+                        <Button to="/donate" variant="primary">Donate</Button>
+                        <Button to="/contact" variant="secondary">Get involved</Button>
+                    </div>
+                </div>
+            </section>
+
+            {relatedNews.length > 0 && (
+                <section className="section">
+                    <div className="container">
+                        <div className="section-head">
+                            <h2>More news</h2>
+                        </div>
+                        <div className="article-related">
                             {relatedNews.map(item => (
                                 <Card
                                     key={item.id}
                                     title={item.title}
                                     description={item.summary}
                                     image={item.image}
+                                    meta={formatDate(item.date)}
                                     link={`/news/${item.id}`}
-                                    buttonText="Read More ↗"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    date={item.date}
                                 />
                             ))}
                         </div>
-                    </section>
-                )}
-            </div>
-
-            {/* Interactive Lightbox Modal */}
-            {lightboxIndex !== null && article.relatedImages && (
-                <div
-                    className="lightbox-backdrop"
-                    onClick={() => setLightboxIndex(null)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Image preview lightbox"
-                >
-                    <div
-                        className="lightbox-dialog"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            className="lightbox-close-btn"
-                            onClick={() => setLightboxIndex(null)}
-                            aria-label="Close photo preview"
-                        >
-                            <FaTimes />
-                        </button>
-
-                        <div className="lightbox-image-container">
-                            <img
-                                src={article.relatedImages[lightboxIndex].url}
-                                alt={article.relatedImages[lightboxIndex].title}
-                                className="lightbox-image"
-                            />
-
-                            {article.relatedImages.length > 1 && (
-                                <>
-                                    <button
-                                        className="lightbox-nav-btn prev"
-                                        onClick={() => setLightboxIndex((prev) => (prev - 1 + article.relatedImages.length) % article.relatedImages.length)}
-                                        aria-label="Previous image"
-                                    >
-                                        <FaChevronLeft />
-                                    </button>
-                                    <button
-                                        className="lightbox-nav-btn next"
-                                        onClick={() => setLightboxIndex((prev) => (prev + 1) % article.relatedImages.length)}
-                                        aria-label="Next image"
-                                    >
-                                        <FaChevronRight />
-                                    </button>
-                                </>
-                            )}
-                        </div>
                     </div>
+                </section>
+            )}
+
+            {lightboxIndex !== null && photos[lightboxIndex] && (
+                <div className="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick={() => setLightboxIndex(null)}>
+                    <button type="button" className="lightbox-close" onClick={() => setLightboxIndex(null)} aria-label="Close photo viewer">
+                        <FaXmark />
+                    </button>
+                    <img
+                        src={photos[lightboxIndex].url}
+                        alt={photos[lightboxIndex].title || ''}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    {photos.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                className="lightbox-nav is-prev"
+                                onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => (prev - 1 + photos.length) % photos.length); }}
+                                aria-label="Previous photo"
+                            >
+                                <FaChevronLeft />
+                            </button>
+                            <button
+                                type="button"
+                                className="lightbox-nav is-next"
+                                onClick={(e) => { e.stopPropagation(); setLightboxIndex(prev => (prev + 1) % photos.length); }}
+                                aria-label="Next photo"
+                            >
+                                <FaChevronRight />
+                            </button>
+                            <p className="lightbox-count">{lightboxIndex + 1} / {photos.length}</p>
+                        </>
+                    )}
                 </div>
             )}
 
-            {/* Edit Article Modal */}
             <NewsModal
                 isOpen={editModalOpen}
                 onClose={() => setEditModalOpen(false)}

@@ -1,54 +1,75 @@
 @use '../styles/variables' as *;
 @use '../styles/mixins' as *;
 
-.hero-container {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../assets/hero-bg.jpg') center center/cover no-repeat;
-    height: 100vh;
-    width: 100%;
+.hero {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.2);
-    object-fit: contain;
-    margin-top: -80px; // Compensate for sticky navbar
-}
+    min-height: min(84vh, 760px);
+    padding: 96px 0;
+    color: $paper;
+    background:
+        linear-gradient(90deg, rgba($indigo-900, 0.92) 0%, rgba($indigo-900, 0.78) 38%, rgba($indigo-900, 0.25) 75%, rgba($indigo-900, 0.1) 100%),
+        url('../assets/hero-bg.jpg') center 30% / cover no-repeat;
 
-.hero-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: $white;
-    text-align: center;
-    max-width: 800px;
-    padding: 0 20px;
-
-    h1 {
-        font-size: 3rem;
-        margin-bottom: 24px;
-        color: $white;
-
-        @include mobile {
-            font-size: 2rem;
-        }
-    }
-
-    p {
-        margin-bottom: 32px;
-        font-size: 1.2rem;
-        line-height: 1.6;
-
-        @include mobile {
-            font-size: 1rem;
-        }
+    @include tablet {
+        min-height: 0;
+        padding: 72px 0 64px;
+        background:
+            linear-gradient(180deg, rgba($indigo-900, 0.7) 0%, rgba($indigo-900, 0.9) 100%),
+            url('../assets/hero-bg.jpg') center / cover no-repeat;
     }
 }
 
-.hero-btns {
-    display: flex;
-    gap: 1rem;
+.hero-inner {
+    position: relative;
 }
 
-.hero-btn {
-    font-size: 1.1rem;
+.hero-org {
+    font-family: $font-family-heading;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 18px;
+}
+
+// The stacked tagline is the one bold typographic moment on the site
+.hero-title {
+    display: flex;
+    flex-direction: column;
+    font-size: clamp(3rem, 8vw, 5.75rem);
+    font-weight: 600;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: $paper;
+    margin-bottom: 28px;
+
+    span:nth-child(2) {
+        padding-left: 0.5em;
+    }
+
+    span:nth-child(3) {
+        padding-left: 1em;
+    }
+
+    @include mobile {
+        span:nth-child(2),
+        span:nth-child(3) {
+            padding-left: 0;
+        }
+    }
+}
+
+.hero-lead {
+    max-width: 46ch;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 34px;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }

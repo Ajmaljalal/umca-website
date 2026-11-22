@@ -2,9 +2,17 @@
 @use 'reset';
 @use 'mixins' as *;
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: $font-family-base;
-    background-color: $background-light;
+    font-size: $fs-base;
+    line-height: 1.65;
+    color: $ink;
+    background-color: $paper;
+    text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -14,84 +22,216 @@ h4,
 h5,
 h6 {
     font-family: $font-family-heading;
-    font-weight: 700;
-    color: $primary-color;
+    font-weight: 600;
+    line-height: 1.2;
+    color: $indigo-700;
     margin-bottom: $spacing-md;
+    text-wrap: balance;
+}
+
+h1 { font-size: clamp(2.1rem, 4vw, $fs-3xl); letter-spacing: -0.01em; }
+h2 { font-size: clamp(1.65rem, 3vw, $fs-2xl); letter-spacing: -0.005em; }
+h3 { font-size: $fs-lg; }
+
+p {
+    text-wrap: pretty;
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    @include focus-ring;
+}
+
+::selection {
+    background: rgba($crimson, 0.18);
+}
+
+main {
+    min-height: calc(100vh - #{$nav-height});
 }
 
 .container {
     @include container;
 }
 
-// Utility Classes
-.text-center {
-    text-align: center;
+// Interior page header: same structure on every page
+.page-header {
+    background: $mist;
+    border-bottom: 1px solid $rule;
+    padding: 64px 0 56px;
+
+    @include tablet {
+        padding: 44px 0 40px;
+    }
+
+    h1 {
+        margin-bottom: 14px;
+    }
+
+    .page-header-intro {
+        max-width: 62ch;
+        font-size: $fs-md;
+        color: $muted;
+    }
 }
 
-.text-left {
-    text-align: left;
+// Standard vertical rhythm for page sections
+.section {
+    padding: $section-y 0;
+
+    @include tablet {
+        padding: $section-y-mobile 0;
+    }
+
 }
 
-.text-right {
-    text-align: right;
+// Two consecutive white sections share one gap instead of doubling it
+.section:not(.section-tinted) + .section:not(.section-tinted) {
+    padding-top: 0;
 }
 
-.mb-sm {
-    margin-bottom: $spacing-sm;
+.section-tinted {
+    background: $mist;
 }
 
-.mb-md {
-    margin-bottom: $spacing-md;
+.section-head {
+    max-width: 62ch;
+    margin-bottom: 40px;
+
+    h2 {
+        margin-bottom: 10px;
+    }
+
+    p {
+        color: $muted;
+        font-size: $fs-md;
+    }
 }
 
-.mb-lg {
-    margin-bottom: $spacing-lg;
+// Two-column section: heading on the left, content on the right
+.split {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) 2.4fr;
+    gap: 48px;
+    align-items: start;
+
+    > h2,
+    .split-title {
+        margin: 0;
+        padding-top: 14px;
+        border-top: 3px solid $crimson;
+        max-width: 240px;
+    }
+
+    @include tablet {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
 }
 
-.mb-xl {
-    margin-bottom: $spacing-xl;
+.prose {
+    max-width: 68ch;
+
+    p + p {
+        margin-top: 1em;
+    }
+
+    p {
+        font-size: 1.05rem;
+        line-height: 1.75;
+    }
 }
 
-.mt-sm {
-    margin-top: $spacing-sm;
+// Closing call-to-action band
+.cta-band {
+    background: $indigo-700;
+    color: $paper;
+    padding: 64px 0;
+
+    h2 {
+        color: $paper;
+        margin-bottom: 10px;
+    }
+
+    p {
+        color: rgba(255, 255, 255, 0.85);
+        max-width: 52ch;
+    }
+
+    .cta-band-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+
+        @include tablet {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    .cta-band-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        flex-shrink: 0;
+    }
 }
 
-.mt-md {
-    margin-top: $spacing-md;
+.text-link {
+    color: $crimson;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+
+    &:hover {
+        color: $crimson-dark;
+        text-decoration-thickness: 2px;
+    }
 }
 
-.mt-lg {
-    margin-top: $spacing-lg;
+// Utility classes
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.mb-sm { margin-bottom: $spacing-sm; }
+.mb-md { margin-bottom: $spacing-md; }
+.mb-lg { margin-bottom: $spacing-lg; }
+.mb-xl { margin-bottom: $spacing-xl; }
+.mt-sm { margin-top: $spacing-sm; }
+.mt-md { margin-top: $spacing-md; }
+.mt-lg { margin-top: $spacing-lg; }
+.mt-xl { margin-top: $spacing-xl; }
+.d-flex { display: flex; }
+.flex-column { flex-direction: column; }
+.align-items-center { align-items: center; }
+.justify-content-center { justify-content: center; }
+.justify-content-between { justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+.text-light-color { color: $muted; }
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }
 
-.mt-xl {
-    margin-top: $spacing-xl;
-}
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
 
-.d-flex {
-    display: flex;
-}
-
-.flex-column {
-    flex-direction: column;
-}
-
-.align-items-center {
-    align-items: center;
-}
-
-.justify-content-center {
-    justify-content: center;
-}
-
-.justify-content-between {
-    justify-content: space-between;
-}
-
-.flex-wrap {
-    flex-wrap: wrap;
-}
-
-.text-light-color {
-    color: $text-light;
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }

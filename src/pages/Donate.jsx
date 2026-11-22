@@ -1,36 +1,47 @@
 import React from 'react';
+import PageHeader from '../components/PageHeader';
 import './Donate.scss';
+
+const donationPageUrl = 'https://www.zeffy.com/en-US/donation-form/support-umca-building-a-stronger-community-together';
 
 const Donate = () => {
     return (
-        <div className="container donate-container">
-            <h1 className="mb-lg">Your Contribution Makes a Difference</h1>
-            <p className="donate-subtitle">
-                Every donation helps us continue our work serving the community. Whether big or small, your generosity supports our programs and services that benefit hundreds of families.
-            </p>
+        <div className="donate-page">
+            <PageHeader
+                title="Donate"
+                intro="Every gift helps us serve families through relief, education, and community programs. UMCA is a 501(c)(3) nonprofit, so your donation is tax-deductible."
+            />
 
-            {/* Embedded Zeffy Donation Card */}
-            <div className="donate-card donate-card-wide">
-                <iframe
-                    title="Donation form powered and secured by Zeffy"
-                    src="https://www.zeffy.com/embed/donation-form/support-umca-building-a-stronger-community-together"
-                    allow="payment"
-                    className="zeffy-embed-iframe"
-                />
-            </div>
+            <section className="section">
+                <div className="container donate-grid">
+                    <aside className="donate-notes">
+                        <h2>Where your gift goes</h2>
+                        <ul>
+                            <li>Emergency relief and food for families in crisis</li>
+                            <li>Education, youth development, and mentorship</li>
+                            <li>Case management and wellness support</li>
+                            <li>Community gatherings and interfaith programs</li>
+                        </ul>
+                        <p className="donate-secure">
+                            Donations are processed securely by Zeffy.
+                        </p>
+                        <p className="donate-fallback">
+                            Form not loading?{' '}
+                            <a href={donationPageUrl} target="_blank" rel="noopener noreferrer" className="text-link">
+                                Open the donation page
+                            </a>
+                        </p>
+                    </aside>
 
-            <div className="donate-external-link">
-                <p>
-                    Having trouble viewing the form?{' '}
-                    <a
-                        href="https://www.zeffy.com/en-US/donation-form/support-umca-building-a-stronger-community-together"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Open donation page in a new tab ↗
-                    </a>
-                </p>
-            </div>
+                    <div className="donate-form">
+                        <iframe
+                            title="Donation form powered and secured by Zeffy"
+                            src="https://www.zeffy.com/embed/donation-form/support-umca-building-a-stronger-community-together"
+                            allow="payment"
+                        />
+                    </div>
+                </div>
+            </section>
         </div>
     );
 };

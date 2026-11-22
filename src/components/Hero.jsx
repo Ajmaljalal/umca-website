@@ -4,21 +4,24 @@ import './Hero.scss';
 
 const Hero = () => {
     return (
-        <div className="hero-container">
-            <div className="hero-content">
-                <h1>Welcome to UMCA</h1>
-                <p>United Muslim Community of America</p>
-                <p>Faith - Identity - Service</p>
-                <div className="hero-btns">
-                    <Button to="/programs" variant="primary" className="hero-btn">
-                        Our Programs
-                    </Button>
-                    <Button to="/donate" variant="secondary" className="hero-btn">
-                        Donate
-                    </Button>
+        <section className="hero" aria-labelledby="hero-title">
+            <div className="container hero-inner">
+                <p className="hero-org">United Muslim Community of America</p>
+                <h1 id="hero-title" className="hero-title">
+                    <span>Faith.</span>
+                    <span>Identity.</span>
+                    <span>Service.</span>
+                </h1>
+                <p className="hero-lead">
+                    A faith-based nonprofit serving families and neighbors across America through
+                    education, humanitarian relief, community support, and civic engagement.
+                </p>
+                <div className="hero-actions">
+                    <Button to="/programs" variant="primary">Explore our programs</Button>
+                    <Button to="/donate" variant="secondary">Donate</Button>
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 

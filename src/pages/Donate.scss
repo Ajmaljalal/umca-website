@@ -1,63 +1,78 @@
 @use '../styles/variables' as *;
 @use '../styles/mixins' as *;
 
-.donate-container {
-    padding: 60px 20px 80px;
-    text-align: center;
+.donate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.7fr;
+    gap: 56px;
+    align-items: start;
+
+    @include desktop {
+        grid-template-columns: 1fr;
+        gap: 36px;
+    }
 }
 
-.donate-subtitle {
-    font-size: 1.15rem;
-    max-width: 720px;
-    margin: 0 auto 40px auto;
-    color: #475569;
-    line-height: 1.6;
+.donate-notes {
+    position: sticky;
+    top: calc(#{$nav-height} + 32px);
 
-    @include mobile {
-        font-size: 1rem;
+    @include desktop {
+        position: static;
+        order: 2;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+        margin-bottom: 14px;
+    }
+
+    ul {
         margin-bottom: 24px;
     }
-}
 
-.donate-card-wide {
-    background-color: $white;
-    border-radius: 16px;
-    max-width: 880px;
-    width: 100%;
-    height: 820px;
-    margin: 0 auto;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    position: relative;
+    li {
+        position: relative;
+        padding: 10px 0 10px 24px;
+        border-bottom: 1px solid $rule;
 
-    @include mobile {
-        height: 750px;
-        border-radius: 12px;
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 1.35em;
+            width: 10px;
+            height: 2px;
+            background: $crimson;
+        }
     }
 }
 
-.zeffy-embed-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-    background-color: $white;
+.donate-secure,
+.donate-fallback {
+    font-size: 0.925rem;
+    color: $muted;
 }
 
-.donate-external-link {
-    margin-top: 24px;
-    font-size: 0.95rem;
-    color: #64748b;
+.donate-fallback {
+    margin-top: 10px;
+}
 
-    a {
-        color: $primary-color;
-        font-weight: 600;
-        text-decoration: underline;
-        transition: color 0.2s ease;
+.donate-form {
+    height: 860px;
+    border: 1px solid $rule;
+    border-radius: $radius-lg;
+    overflow: hidden;
+    background: $paper;
 
-        &:hover {
-            color: darken($primary-color, 15%);
-        }
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+    }
+
+    @include mobile {
+        height: 780px;
     }
 }

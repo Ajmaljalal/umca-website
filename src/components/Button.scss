@@ -4,36 +4,45 @@
 .button {
     @include button-base;
     text-align: center;
-    display: inline-block;
+    text-decoration: none;
 
     &.primary {
-        background-color: $accent-color;
-        color: $white;
+        background-color: $crimson;
+        border-color: $crimson;
+        color: $paper;
 
         &:hover {
-            background-color: darken($accent-color, 10%);
+            background-color: $crimson-dark;
+            border-color: $crimson-dark;
         }
     }
 
+    // Light outline for use on photos and dark backgrounds
     &.secondary {
         background-color: transparent;
-        border: 2px solid $white;
-        color: $white;
+        border-color: rgba(255, 255, 255, 0.85);
+        color: $paper;
 
         &:hover {
-            background-color: $white;
-            color: $primary-color;
+            background-color: $paper;
+            border-color: $paper;
+            color: $indigo-900;
         }
     }
 
     &.outline {
         background-color: transparent;
-        border: 2px solid $primary-color;
-        color: $primary-color;
+        border-color: $indigo-700;
+        color: $indigo-700;
 
         &:hover {
-            background-color: $primary-color;
-            color: $white;
+            background-color: $indigo-700;
+            color: $paper;
         }
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 }

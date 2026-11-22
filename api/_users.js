@@ -8,7 +8,7 @@ export const users = [
         "email": "admin@umca.org",
         "role": "Admin",
         "avatar": "🛡️",
-        "passwordHash": "scrypt$bC0fu4DYrpKaNIBR9amtPg==$dU704iPB17NxU+7/SNyACJQbdDQMkFFoAm5JCCoBtCs3oDtlmvM5GJpicsDn+TMk28uE6RCubeDRXQFZhTldbg=="
+        "passwordHash": "scrypt$L4ZYj7NuupVZ/Zup5YstKA==$YzV7sr9VWS7IflbTStKWNPMBQyR0hvzqVOxUk8xfF3dnIjk2e4kAHgwAb/cfP+TfOo+tTQGhKXBEGYlEEjPNrg=="
     },
     {
         "id": 2,

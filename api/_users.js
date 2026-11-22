@@ -26,6 +26,6 @@ export const users = [
         "email": "",
         "role": "Admin",
         "avatar": "🛡️",
-        "passwordHash": "scrypt$E/YO+FOEZU9Nu9jgzeFoTg==$ok1MczT1axLW/Kf9mVkDDP900joWCUeEMW5oMD6037TCM1ZCc6SEYaAnUaZMW4g6qsjXOqsmB6qMJqQPREQ4ug=="
+        "passwordHash": "scrypt$NsWCpAclT2oO2QY/lnwwFw==$9CTI5NILfTTFBAEYowwajmEeap0PJagPYy58MwcPrjSz2u8DnXhWCiidnzprBqzEOEhRFzeGYujoB8NaZ4o9zg=="
     }
 ];

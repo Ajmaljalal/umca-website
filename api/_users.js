@@ -17,7 +17,7 @@ export const users = [
         "email": "sarah.j@umca.org",
         "role": "Editor",
         "avatar": "✍️",
-        "passwordHash": "scrypt$+01CjOMPgKAcSO576y8Eag==$vzXiy41Gaoc47vc/qC57m/+eaJgNZ8zETq7UTCyULuvFthNO/gK/6e35VUmnVLv7AY5GUwyaYlbmLiwiwlf/oQ=="
+        "passwordHash": "scrypt$fHf1q8AIRcCsbkygIcIbog==$kKil3ANNNO+aG4oaJ8ktKUJJ+gJPzSjv51GulzEMdjlmZt5zM8ks432H5y7GCe64Pa769mp6GVg2UBMdXTOxyg=="
     },
     {
         "id": 3,

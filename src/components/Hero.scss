@@ -25,39 +25,24 @@
     position: relative;
 }
 
-.hero-org {
-    font-family: $font-family-heading;
-    font-size: 1.15rem;
-    font-style: italic;
-    color: rgba(255, 255, 255, 0.85);
+.hero-title {
+    max-width: 13em;
+    font-size: clamp(2.5rem, 5.4vw, 4.25rem);
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    color: $paper;
     margin-bottom: 18px;
 }
 
-// The stacked tagline is the one bold typographic moment on the site
-.hero-title {
-    display: flex;
-    flex-direction: column;
-    font-size: clamp(3rem, 8vw, 5.75rem);
-    font-weight: 600;
-    line-height: 0.98;
-    letter-spacing: -0.02em;
-    color: $paper;
-    margin-bottom: 28px;
-
-    span:nth-child(2) {
-        padding-left: 0.5em;
-    }
-
-    span:nth-child(3) {
-        padding-left: 1em;
-    }
-
-    @include mobile {
-        span:nth-child(2),
-        span:nth-child(3) {
-            padding-left: 0;
-        }
-    }
+.hero-tagline {
+    font-family: $font-family-heading;
+    font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 22px;
+    padding-left: 14px;
+    border-left: 3px solid $crimson;
 }
 
 .hero-lead {
